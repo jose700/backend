@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const  {uploadToFirebase}  = require('../../middleware/multer');
+
 
 
 const {
@@ -41,7 +41,7 @@ router.post('/tareas_estudiante',  crearTareaEstudiante);
 // Endpoint para actualizar el progreso de un estudiante en una tarea específica
 // Se incluye la cédula y el ID de la tarea en la ruta
 //router.put('/estudiante/:cedula/tarea/:idtarea', upload.single('archivo'), actualizarProgresoEstudiante);
-router.put('/estudiante/:cedula/tarea/:idtarea',  uploadToFirebase,actualizarProgresoEstudiante);
+router.put('/estudiante/:cedula/tarea/:idtarea',  actualizarProgresoEstudiante);
 
 
 // Endpoint para eliminar el progreso de una tarea de estudiante por su ID

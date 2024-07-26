@@ -1,23 +1,7 @@
 const { pool } = require('../../db/conexion');
-const { Storage } = require('@google-cloud/storage');
+
 const express = require('express');
 const app = express();
-const fs = require('fs');
-const path = require('path');
-const { GOOGLE_PROJECT_ID, GOOGLE_APPLICATION_CREDENTIALS_PATH,GOOGLE_BUCKET_NAME } = require('../../db/conexion');
-require('dotenv').config(); // Carga las variables de entorno desde el archivo .env
-
-
-
-
-
-// Configura el cliente de Google Cloud Storage
-const storage = new Storage({
-  projectId: GOOGLE_PROJECT_ID, // Reemplaza con tu project ID de Firebase
-  keyFilename: path.join(__dirname,'../', GOOGLE_APPLICATION_CREDENTIALS_PATH) // Ruta al archivo de clave JSON descargado
-});
-const bucket = storage.bucket(GOOGLE_BUCKET_NAME);
- // Reemplaza con el nombre de tu bucket
 
 
 const obtenerTareasEstudiantes = async (req, res) => {
@@ -251,10 +235,7 @@ const obtenerTareasEstudiantesPorTutor = async (req, res) => {
         };
       }
 
-      // Construir la URL pública para visualizar el archivo
-      const archivoUrl = row.archivo_nombre_subida
-        ? `https://storage.googleapis.com/${process.env.GOOGLE_BUCKET_NAME}/${row.archivo_nombre_subida}`
-        : null;
+     
 
       acc[usuariotutor].tareas.push({
         idtarea: row.idtarea,
@@ -278,7 +259,7 @@ const obtenerTareasEstudiantesPorTutor = async (req, res) => {
         archivo_nombre_subida: row.archivo_nombre_subida,
         archivo_mimetype_subida: row.archivo_mimetype_subida,
         tarea_cumplida_subida: row.tarea_cumplida_subida,
-        archivo_url: archivoUrl
+       
       });
 
       return acc;
@@ -506,7 +487,6 @@ const eliminarProgresoEstudiante = async (req, res) => {
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
-
 const eliminarTareaSubidaEstudiante = async (req, res) => {
   const { id } = req.params; // ID de la tarea a eliminar
 
@@ -518,21 +498,6 @@ const eliminarTareaSubidaEstudiante = async (req, res) => {
       return res.status(404).json({ error: 'Tarea no encontrada' });
     }
 
-    const archivo = resultado.rows[0];
-    const archivoNombre = archivo.archivo_nombre;
-
-    // Verifica que el nombre del archivo en la base de datos sea correcto
-    console.log('Nombre del archivo a eliminar:', archivoNombre);
-
-    // Intenta eliminar el archivo
-    const file = bucket.file(archivoNombre);
-
-   
-
-    await file.delete();
-
-    console.log(`Archivo eliminado correctamente: ${archivoNombre}`);
-
     // Elimina el registro de la base de datos
     await pool.query('DELETE FROM tareas_subidas_estudiantes WHERE id = $1', [id]);
 
@@ -542,38 +507,25 @@ const eliminarTareaSubidaEstudiante = async (req, res) => {
 
   } catch (error) {
     console.error('Error al eliminar la tarea:', error);
-    if (error.code === 404) {
-      // Archivo no encontrado
-      res.status(404).json({ error: 'Archivo no encontrado en Google Cloud Storage' });
-    } else {
-      // Otros errores
-      res.status(500).json({ error: 'Error al eliminar la tarea' });
-    }
+    res.status(500).json({ error: 'Error al eliminar la tarea' });
   }
 };
 
-
 const actualizarProgresoEstudiante = async (req, res) => {
   const { cedula, idtarea } = req.params;
-  const { fecha_envio_tarea, tarea_cumplida } = req.body;
-  const archivo_nombre = req.file ? req.file.originalname : null; // Nombre del archivo
-  const archivo_mimetype = req.file ? req.file.mimetype : null; // Tipo MIME del archivo
+  const { fecha_envio_tarea, calificacion, tarea_cumplida, archivo_nombre } = req.body;
 
   console.log('Datos recibidos en la solicitud:');
   console.log('Cédula:', cedula);
   console.log('ID Tarea:', idtarea);
   console.log('Fecha de envío de tarea:', fecha_envio_tarea);
   console.log('Nombre del archivo:', archivo_nombre);
-  console.log('Tipo MIME del archivo:', archivo_mimetype);
+  console.log('Calificación:', calificacion);
   console.log('Tarea cumplida:', tarea_cumplida);
-  console.log('Datos del archivo:', req.file);
 
-  if (!fecha_envio_tarea || !archivo_nombre || !archivo_mimetype || tarea_cumplida === undefined) {
+  // Verifica que todos los datos necesarios estén presentes
+  if (!fecha_envio_tarea || archivo_nombre === undefined ||  tarea_cumplida === undefined) {
     return res.status(400).json({ error: 'Datos incompletos en la solicitud' });
-  }
-
-  if (!req.file) {
-    return res.status(400).json({ error: 'No se ha subido ningún archivo' });
   }
 
   try {
@@ -592,12 +544,12 @@ const actualizarProgresoEstudiante = async (req, res) => {
 
       console.log('Insertando o actualizando progreso del estudiante...');
       const query = `
-        INSERT INTO tareas_subidas_estudiantes (idtarea, cedula_estudiante, fecha_envio_tarea, archivo_nombre, archivo_mimetype, tarea_cumplida)
+        INSERT INTO tareas_subidas_estudiantes (idtarea, cedula_estudiante, fecha_envio_tarea, archivo_nombre, calificacion, tarea_cumplida)
         VALUES ($1, $2, $3, $4, $5, $6)
         ON CONFLICT (idtarea, cedula_estudiante)
         DO UPDATE SET fecha_envio_tarea = EXCLUDED.fecha_envio_tarea,
                       archivo_nombre = EXCLUDED.archivo_nombre,
-                      archivo_mimetype = EXCLUDED.archivo_mimetype,
+                      calificacion = EXCLUDED.calificacion,
                       tarea_cumplida = EXCLUDED.tarea_cumplida
         RETURNING *`;
       const values = [
@@ -605,7 +557,7 @@ const actualizarProgresoEstudiante = async (req, res) => {
         cedula,
         fecha_envio_tarea,
         archivo_nombre,
-        archivo_mimetype,
+        calificacion,
         tarea_cumplida
       ];
 
@@ -635,6 +587,7 @@ const actualizarProgresoEstudiante = async (req, res) => {
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
+
 
 
 module.exports = {

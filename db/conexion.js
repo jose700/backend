@@ -4,10 +4,7 @@ dotenv.config(); // Carga las variables de entorno desde el archivo .env
 
 const {
   POSTGRES_URL,
-  URL,
-  GOOGLE_PROJECT_ID,
-  GOOGLE_APPLICATION_CREDENTIALS_PATH,
-  GOOGLE_BUCKET_NAME,
+
   /*DB_PORT,
   DB_USER,
   DB_PASSWORD,
@@ -32,14 +29,12 @@ const pool = new Pool({
 
 module.exports = {
   pool,
-  GOOGLE_PROJECT_ID,
-  GOOGLE_APPLICATION_CREDENTIALS_PATH,
-  GOOGLE_BUCKET_NAME,
+
   //POSTGRES_URL,
   //DB_PORT,
   //DB_USER,
   //DB_PASSWORD,
   //DB_NAME,
-  URL,
+
   PORT
 };
