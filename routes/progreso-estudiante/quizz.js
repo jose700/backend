@@ -7,7 +7,8 @@ const {
   actualizarQuiz,
   actualizarQuizEstudiante,
   eliminarQuiz,
-  eliminarRespuestasPorTutor
+  eliminarRespuestasPorTutor,
+  obtenerRespuestasEstudiante 
 } = require('../../controllers/progreso-estudiante/quizz');
 
 
@@ -31,6 +32,8 @@ router.delete('/:idpreguntas', eliminarQuiz);
 // Ruta para eliminar respuestas de un estudiante por parte de un tutor
 
 router.delete('/preguntas_estudiantes/:idpreguntas', eliminarRespuestasPorTutor);
+
+router.get('/respuestas/:idpreguntas', obtenerRespuestasEstudiante);
 
 
 

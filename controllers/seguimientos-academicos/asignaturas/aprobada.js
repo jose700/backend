@@ -144,29 +144,31 @@ const getAprobadaMateria = async (req, res) => {
     );
     res.status(200).json(response.rows);
 };
+
 const actualizarAprobada = async (req, res) => {
     const idaprobada = req.params.idaprobada;
-    const { observacion, calificacion1, calificacion2, asistencia } = req.body;
+    const { observacion, calificacion1, calificacion2, asistencia, aprobado } = req.body;
     const actualizacion = await pool.query(`
         UPDATE materia_aprobada 
         SET 
             observacion = $1, 
             calificacion1 = $2, 
             calificacion2 = $3, 
-            asistencia = $4 
-        WHERE idaprobada = $5`,
+            asistencia = $4, 
+            aprobado =$5
+        WHERE idaprobada = $6`,
         [
             observacion,
             calificacion1,
             calificacion2,
-         
             asistencia,
+            aprobado,
             idaprobada
         ]
     );
     res.json({
         message: 'Materia aprobada actualizada',
-        materia_aprobada: { idaprobada, observacion, calificacion1, calificacion2, asistencia }
+        materia_aprobada: { idaprobada, observacion, calificacion1, calificacion2, asistencia, aprobado }
     });
 };
 

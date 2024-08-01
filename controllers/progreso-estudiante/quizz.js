@@ -54,6 +54,7 @@ const obtenerQuizzesPorTutor = async (req, res) => {
   }
 };
 
+
 const obtenerQuizzesPorCedulaEstudiante = async (req, res) => {
   const { cedula_estudiante } = req.params; // Obtener el parámetro `cedula_estudiante` de los parámetros de ruta
   const { nombre_materia } = req.query; // Obtener el parámetro `nombre_materia` de los parámetros de consulta
@@ -348,8 +349,51 @@ const eliminarRespuestasPorTutor = async (req, res) => {
     }
   };
         
-
-
+  const obtenerRespuestasEstudiante = async (req, res) => {
+    const { idpreguntas } = req.params; // Obtener el parámetro `idpreguntas` de los parámetros de ruta
+  
+    try {
+      let query = `
+        SELECT 
+          re.idpreguntas AS idpreguntas,
+          re.cedula_estudiante AS cedula_estudiante,
+          re.respuesta_seleccionada AS respuesta_seleccionada,
+          re.tiempo_tardado AS tiempo_tardado,
+          re.estado_test AS estado_test,
+          q.pregunta AS pregunta,
+          q.respuesta_correcta AS respuesta_correcta,
+          q.respuestas_incorrectas AS respuestas_incorrectas,
+          m.nombre_materia AS nombre_materia,
+          t.nombres AS nombres_tutor,
+          t.apellidos AS apellidos_tutor,
+          e.nombres AS nombres_estudiante,
+          e.apellidos AS apellidos_estudiante,
+          e.correo AS correo_estudiante,
+          e.imagen AS imagen_estudiante
+        FROM respuestas_estudiantes re
+        INNER JOIN preguntas q ON re.idpreguntas = q.idpreguntas
+        INNER JOIN inscripcion_materia im ON q.idmateria = im.idmateria
+        INNER JOIN estudiante e ON im.idestudiante = e.idestudiante
+        INNER JOIN materia m ON q.idmateria = m.idmateria
+        INNER JOIN tutor t ON q.idtutor = t.idtutor
+        WHERE re.idpreguntas = $1`;
+  
+      const values = [idpreguntas];
+  
+      const response = await pool.query(query, values);
+  
+      if (response.rowCount === 0) {
+        return res.status(404).json({ message: 'No se encontraron respuestas para el quiz con el ID proporcionado' });
+      }
+  
+      res.status(200).json(response.rows);
+    } catch (error) {
+      console.error('Error al obtener las respuestas de los estudiantes:', error);
+      res.status(500).json({ error: 'Error al obtener las respuestas de los estudiantes' });
+    }
+  };
+  
+  
   module.exports = {
     obtenerQuizzesPorTutor,
     obtenerQuizzesPorCedulaEstudiante,
@@ -357,5 +401,6 @@ const eliminarRespuestasPorTutor = async (req, res) => {
     actualizarQuiz,
     actualizarQuizEstudiante,
     eliminarQuiz,
-    eliminarRespuestasPorTutor
+    eliminarRespuestasPorTutor,
+    obtenerRespuestasEstudiante
   };
